@@ -1,5 +1,5 @@
 import { Keypair, StrKey } from "@stellar/stellar-sdk";
-import { resolveStellarConfig, StellarRail, HorizonWatcher } from "@checkout/stellar";
+import { resolveStellarConfig, StellarRail, HorizonWatcher, StreamingHorizonWatcher } from "@checkout/stellar";
 import { MockAnchorOffRamp, TestAnchorOffRamp } from "@checkout/offramp";
 import type { OffRampPort } from "@checkout/core";
 import { env } from "../env";
@@ -43,7 +43,10 @@ export async function createContainer(): Promise<Container> {
   await sellersRepo.ensureDefault(sellerWallet, env.defaultSellerName);
 
   const rail = new StellarRail(stellar);
-  const watcher = new HorizonWatcher(stellar.horizonUrl);
+  const watcher =
+    env.watchMode === "stream"
+      ? new StreamingHorizonWatcher(stellar.horizonUrl, { log: (m) => console.log(`[watcher:stream] ${m}`) })
+      : new HorizonWatcher(stellar.horizonUrl);
   const offramp = createOffRamp(seller.keypair);
 
   const service = new LinkService({
@@ -79,6 +82,7 @@ export async function createContainer(): Promise<Container> {
     stop() {
       loop.stop();
       stopPoller?.();
+      if (watcher instanceof StreamingHorizonWatcher) watcher.stop();
     },
   };
 }
