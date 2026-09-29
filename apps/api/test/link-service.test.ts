@@ -220,6 +220,8 @@ describe("LinkService.triggerCashOut — KYC gate", () => {
       status: "NEEDS_INFO",
       requiredFields: [],
       providedFields: {},
+      providedFieldStatus: [],
+      sentFields: [],
       message: null,
       lastSyncedAt: null,
       updatedAt: Date.now(),

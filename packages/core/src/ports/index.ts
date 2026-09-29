@@ -418,10 +418,22 @@ export interface KycRecord {
   /** Values we have on file for this seller. PII — never log, never put on a
    *  webhook payload or a `/links` response; encrypted at rest by the repo. */
   providedFields: Record<string, string>;
+  /** Per-field status from the anchor's `provided_fields` (SEP-12). */
+  providedFieldStatus: ProvidedFieldStatus[];
+  /** Field names (not values) sent to the anchor in the last submission. */
+  sentFields: string[];
   /** Anchor's status/rejection message, verbatim. */
   message: string | null;
   lastSyncedAt: number | null;
   updatedAt: number;
+}
+
+export interface ProvidedFieldStatus {
+  name: string;
+  /** The anchor's status for this field: "ACCEPTED", "REJECTED", "NEEDS_INFO", etc. */
+  status: string | null;
+  /** Any error message from the anchor for this field. */
+  error: string | null;
 }
 
 /** Thrown by {@link KycPort.submit} when required fields are missing, naming

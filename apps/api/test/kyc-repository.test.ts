@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import type { KycRecord } from "@checkout/core";
+import type { KycRecord, ProvidedFieldStatus } from "@checkout/core";
 import { createDb, bootstrap, type DB } from "../src/db/client";
 import { sellerKyc } from "../src/db/schema";
 import { DrizzleKycRepository } from "../src/repos/index";
@@ -19,6 +19,8 @@ function record(over: Partial<KycRecord> = {}): KycRecord {
     status: "ACCEPTED",
     requiredFields: [{ name: "first_name", type: "string", optional: false }],
     providedFields: { first_name: "Ada Lovelace", email_address: "ada@example.org" },
+    providedFieldStatus: [],
+    sentFields: [],
     message: null,
     lastSyncedAt: 1_700_000_000_000,
     updatedAt: 1_700_000_000_001,

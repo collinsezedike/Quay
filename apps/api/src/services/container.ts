@@ -172,7 +172,7 @@ export async function createContainer(): Promise<Container> {
       : pollingWatcher;
   const anchor = createAnchor(db, logger, stellar.networkPassphrase);
   const offramp = new CircuitBreakerOffRamp(createOffRamp(anchor, offrampStateRepo, logger));
-  const kyc = createKyc(anchor, db);
+  const kyc = createKyc(anchor, db, sellersRepo);
 
   // Anchor health probe + circuit breaker (issue #19, 3.7). With mock or no
   // off-ramp the probe is disabled and short-circuits to "always available" so
@@ -443,7 +443,7 @@ function createOffRamp(anchor: AnchorWiring | null, state: OffRampStateRepositor
   });
 }
 
-function createKyc(anchor: AnchorWiring | null, db: DB): KycPort {
+function createKyc(anchor: AnchorWiring | null, db: DB, sellersRepo: DrizzleSellerRepository): KycPort {
   if (!anchor) {
     // No real anchor, nothing to be compliant with. For "none" there is no
     // cash-out to gate at all; for "mock" it never gates the simulated one.
@@ -451,7 +451,15 @@ function createKyc(anchor: AnchorWiring | null, db: DB): KycPort {
   }
   // env.kycEncryptionKey is guaranteed set whenever OFFRAMP is testanchor/anchor (see env.ts).
   const repo = new DrizzleKycRepository(db, parsePiiKey(env.kycEncryptionKey as string));
-  return new TestAnchorKyc({ discovery: anchor.discovery, auth: anchor.auth, repo });
+  // Profile repository for reusable SEP-9 fields — uses the seller's payout fields
+  const profileRepo = {
+    async get(sellerId: string) {
+      const seller = await sellersRepo.findById(sellerId);
+      if (!seller || !seller.payoutFields) return null;
+      return { fields: seller.payoutFields };
+    },
+  };
+  return new TestAnchorKyc({ discovery: anchor.discovery, auth: anchor.auth, repo, profileRepo });
 }
 
 /**

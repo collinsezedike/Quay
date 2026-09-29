@@ -196,6 +196,10 @@ const ADDITIVE_MIGRATIONS = [
   // wallets already present, and "logins stay broken forever" is not an
   // acceptable answer to that.
   `CREATE UNIQUE INDEX IF NOT EXISTS sellers_wallet_unique ON sellers (wallet)`,
+  // Per-field status from the anchor's `provided_fields` (SEP-12). JSON array.
+  `ALTER TABLE seller_kyc ADD COLUMN provided_field_status TEXT`,
+  // Field names (not values) sent to the anchor in the last submission. JSON string[].
+  `ALTER TABLE seller_kyc ADD COLUMN sent_fields TEXT`,
 ];
 
 export function createDb(databaseUrl: string, authToken?: string): { db: DB; client: Client } {
