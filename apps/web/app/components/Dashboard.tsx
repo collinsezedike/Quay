@@ -572,6 +572,11 @@ export default function Dashboard() {
       )}
         </>
       )}
+      <footer style={{ marginTop: 32, paddingTop: 16, borderTop: "1px solid var(--border)", display: "flex", justifyContent: "center", gap: 16, fontSize: 13, color: "var(--text-2, #6b7280)" }}>
+        <Link href="/privacy" style={{ color: "var(--blue)" }}>Privacy Notice</Link>
+        <span aria-hidden="true">·</span>
+        <a href="https://github.com/determined-001/Quay" target="_blank" rel="noopener noreferrer" style={{ color: "var(--blue)" }}>GitHub</a>
+      </footer>
 
       {tab === "api-keys" && <ApiKeys />}
     </>
