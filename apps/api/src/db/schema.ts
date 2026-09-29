@@ -164,6 +164,10 @@ export const offrampJobs = sqliteTable("offramp_jobs", {
   status: text("status").notNull(),
   externalStatus: text("external_status"),
   lastError: text("last_error"),
+  // When the offramp.transfer_required webhook was first sent for this job.
+  // Null means the transfer instructions haven't been surfaced yet; once set,
+  // the webhook is not re-fired on subsequent polls or restarts.
+  transferNotifiedAt: integer("transfer_notified_at"),
   createdAt: integer("created_at").notNull(),
   updatedAt: integer("updated_at").notNull(),
 });
