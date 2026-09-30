@@ -837,14 +837,50 @@ registered URL.
 
 ### Events
 
-| Event             | Fired when                                  |
-| ----------------- | ------------------------------------------- |
-| `link.paid`       | a matching payment settled (exact or over)  |
-| `link.underpaid`  | a payment arrived for less than requested   |
-| `offramp.settled` | a cash-out job settled                       |
-| `offramp.failed`  | a cash-out job failed                        |
+| Event                   | Fired when                                          |
+| ----------------------- | --------------------------------------------------- |
+| `link.paid`             | a matching payment settled (exact or over)          |
+| `link.underpaid`        | a payment arrived for less than requested           |
+| `offramp.settled`       | a cash-out job settled                              |
+| `offramp.failed`        | a cash-out job failed                               |
+| `offramp.transfer_required` | anchor has published deposit instructions; the seller's wallet must send USDC to the anchor to fund the withdrawal |
+| `kyc.accepted`          | anchor accepted seller's KYC submission             |
+| `kyc.rejected`          | anchor rejected seller's KYC submission             |
+| `kyc.needs_info`        | anchor requested additional/missing fields          |
 
 ### Body
+
+#### Body for `offramp.transfer_required`
+```json
+{
+  "event": "offramp.transfer_required",
+  "data": {
+    "linkId": "lnk_...",
+    "reference": "...",
+    "status": "offramp_pending",
+    "amount": "10.50",
+    "paidAmount": "10.50",
+    "asset": { "code": "USDC", "issuer": "G..." },
+    "txHash": null,
+    "transfer": {
+      "destination": "GANCHOR...",
+      "amount": "10.50",
+      "asset": { "code": "USDC", "issuer": "G..." },
+      "memo": "withdrawal_123",
+      "memoType": "text"
+    },
+    "jobId": "job_..."
+  },
+  "id": "lnk_...",
+  "sentAt": "2026-06-19T12:00:00.000Z"
+}
+```
+
+The `transfer` object contains the SEP-6 deposit instructions the seller's wallet must sign and submit. The integrator should display these to the seller or prompt their wallet to sign.
+
+**Note on sensitivity:** The transfer instructions contain no secrets — they are the public anchor account and memo the payer needs. However, integrators should not expose them to anyone but the seller.
+
+#### Payment link events (`link.*`, `offramp.settled`, `offramp.failed`)
 ```json
 {
   "event": "link.paid",
@@ -859,6 +895,23 @@ registered URL.
     "overpaid": false
   },
   "id": "lnk_...",
+  "sentAt": "2026-06-19T12:00:00.000Z"
+}
+```
+
+#### KYC events (`kyc.*`)
+For seller-level KYC events, `id` is the seller ID and the payload contains **no PII** (only status metadata and field names). `message` is populated only on `kyc.rejected` and is `null` for all other events:
+```json
+{
+  "event": "kyc.needs_info",
+  "data": {
+    "anchorDomain": "testanchor.stellar.org",
+    "status": "NEEDS_INFO",
+    "previousStatus": "PROCESSING",
+    "missingFields": ["id_document_front", "id_document_back"],
+    "message": null
+  },
+  "id": "sel_...",
   "sentAt": "2026-06-19T12:00:00.000Z"
 }
 ```
