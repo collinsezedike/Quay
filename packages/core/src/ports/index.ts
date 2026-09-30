@@ -317,6 +317,10 @@ export interface StoredOffRampJob {
   status: OffRampJobStatus;
   externalStatus: string | null; // raw upstream status string, for debugging
   lastError: string | null;
+  /** When the offramp.transfer_required webhook was first sent for this job.
+   *  Null means the transfer instructions haven't been surfaced yet; once set,
+   *  the webhook is not re-fired on subsequent polls or restarts. */
+  transferNotifiedAt: number | null;
   createdAt: number;
   updatedAt: number;
 }
@@ -328,7 +332,7 @@ export interface OffRampStateRepository {
   getJob(jobId: string): Promise<StoredOffRampJob | null>;
   updateJob(
     jobId: string,
-    patch: Partial<Pick<StoredOffRampJob, "targetAmount" | "status" | "externalStatus" | "lastError">>,
+    patch: Partial<Pick<StoredOffRampJob, "targetAmount" | "status" | "externalStatus" | "lastError" | "transferNotifiedAt">>,
   ): Promise<void>;
 }
 
@@ -645,7 +649,7 @@ export type PublicWebhook = Omit<Webhook, "secretEncrypted" | "previousSecretEnc
 export interface WebhookDelivery {
   id: string;
   webhookId: string;
-  linkId: string;
+  linkId: string | null;
   event: string;
   /** Which attempt number (1-based). */
   attempt: number;
@@ -669,7 +673,7 @@ export type WebhookQueueStatus = "pending" | "claimed" | "delivered" | "dead";
 export interface WebhookQueueEntry {
   id: string;
   webhookId: string;
-  linkId: string;
+  linkId: string | null;
   event: string;
   /** The signed JSON body, serialised once at enqueue time. */
   payload: string;

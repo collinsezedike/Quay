@@ -275,6 +275,7 @@ export class TestAnchorOffRamp implements OffRampPort {
       status: "pending",
       externalStatus: null,
       lastError: null,
+      transferNotifiedAt: null,
       createdAt: now,
       updatedAt: now,
     });
