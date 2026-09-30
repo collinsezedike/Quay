@@ -844,8 +844,13 @@ registered URL.
 | `offramp.settled`       | a cash-out job settled                              |
 | `offramp.failed`        | a cash-out job failed                               |
 | `offramp.transfer_required` | anchor has published deposit instructions; the seller's wallet must send USDC to the anchor to fund the withdrawal |
+| `kyc.accepted`          | anchor accepted seller's KYC submission             |
+| `kyc.rejected`          | anchor rejected seller's KYC submission             |
+| `kyc.needs_info`        | anchor requested additional/missing fields          |
 
-### Body for `offramp.transfer_required`
+### Body
+
+#### Body for `offramp.transfer_required`
 ```json
 {
   "event": "offramp.transfer_required",
@@ -875,7 +880,7 @@ The `transfer` object contains the SEP-6 deposit instructions the seller's walle
 
 **Note on sensitivity:** The transfer instructions contain no secrets — they are the public anchor account and memo the payer needs. However, integrators should not expose them to anyone but the seller.
 
-### Body for other events
+#### Payment link events (`link.*`, `offramp.settled`, `offramp.failed`)
 ```json
 {
   "event": "link.paid",
@@ -890,6 +895,23 @@ The `transfer` object contains the SEP-6 deposit instructions the seller's walle
     "overpaid": false
   },
   "id": "lnk_...",
+  "sentAt": "2026-06-19T12:00:00.000Z"
+}
+```
+
+#### KYC events (`kyc.*`)
+For seller-level KYC events, `id` is the seller ID and the payload contains **no PII** (only status metadata and field names). `message` is populated only on `kyc.rejected` and is `null` for all other events:
+```json
+{
+  "event": "kyc.needs_info",
+  "data": {
+    "anchorDomain": "testanchor.stellar.org",
+    "status": "NEEDS_INFO",
+    "previousStatus": "PROCESSING",
+    "missingFields": ["id_document_front", "id_document_back"],
+    "message": null
+  },
+  "id": "sel_...",
   "sentAt": "2026-06-19T12:00:00.000Z"
 }
 ```
