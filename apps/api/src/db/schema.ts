@@ -184,6 +184,10 @@ export const sellerKyc = sqliteTable("seller_kyc", {
   status: text("status").notNull(),
   requiredFields: text("required_fields").notNull(), // JSON KycFieldSpec[] — not PII, just schema metadata
   fieldsEncrypted: text("fields_encrypted").notNull(), // AES-256-GCM blob of Record<string,string>
+  // Per-field status from the anchor's `provided_fields` (SEP-12). JSON array of ProvidedFieldStatus.
+  providedFieldStatus: text("provided_field_status"),
+  // Field names (not values) sent to the anchor in the last submission. JSON string[].
+  sentFields: text("sent_fields"),
   message: text("message"),
   lastSyncedAt: integer("last_synced_at"),
   updatedAt: integer("updated_at").notNull(),

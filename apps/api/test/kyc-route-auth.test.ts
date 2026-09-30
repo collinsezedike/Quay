@@ -25,6 +25,8 @@ describe("kycRoutes — authentication and scoping", () => {
     requiredFields: [],
     // Stand-in for real SEP-12 PII: legal name, address, bank account.
     providedFields: { first_name: "Ada", bank_account_number: "1234567890" },
+    providedFieldStatus: [],
+    sentFields: [],
     message: null,
     lastSyncedAt: 1,
     updatedAt: 1,

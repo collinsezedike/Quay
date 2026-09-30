@@ -183,7 +183,7 @@ export async function createContainer(): Promise<Container> {
   const offramp = new CircuitBreakerOffRamp(createOffRamp(anchor, offrampStateRepo, logger));
   const kycAnchorDomain = env.anchorHomeDomain ?? TESTANCHOR_HOME_DOMAIN;
   const webhookSender = new WebhookSender(webhooksRepo, { maxAttempts: 1, logger });
-  const kyc = createKyc(anchor, db, webhooksRepo, webhookSender, kycAnchorDomain);
+  const kyc = createKyc(anchor, db, sellersRepo, webhooksRepo, webhookSender, kycAnchorDomain);
   const anchorDomain = anchor?.auth.anchorDomain ?? null;
 
   // Anchor health probe + circuit breaker (issue #19, 3.7). With mock or no
@@ -460,6 +460,7 @@ function createOffRamp(anchor: AnchorWiring | null, state: OffRampStateRepositor
 function createKyc(
   anchor: AnchorWiring | null,
   db: DB,
+  sellersRepo: DrizzleSellerRepository,
   webhooks?: WebhookRepository,
   sender?: WebhookSender,
   anchorDomain?: string,
@@ -483,7 +484,15 @@ function createKyc(
     .catch(() => {
       // ignore DB errors during initial metric probe if tables are not yet migrated
     });
-  const baseKyc = new TestAnchorKyc({ discovery: anchor.discovery, auth: anchor.auth, repo });
+  // Profile repository for reusable SEP-9 fields — uses the seller's payout fields
+  const profileRepo = {
+    async get(sellerId: string) {
+      const seller = await sellersRepo.findById(sellerId);
+      if (!seller || !seller.payoutFields) return null;
+      return { fields: seller.payoutFields };
+    },
+  };
+  const baseKyc = new TestAnchorKyc({ discovery: anchor.discovery, auth: anchor.auth, repo, profileRepo });
   if (webhooks && sender && anchorDomain) {
     return new KycEvents({
       inner: baseKyc,

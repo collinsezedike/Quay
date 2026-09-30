@@ -366,6 +366,8 @@ export class AlwaysAcceptedKyc implements KycPort {
       status: "ACCEPTED",
       requiredFields: [],
       providedFields: {},
+      providedFieldStatus: [],
+      sentFields: [],
       message: null,
       lastSyncedAt: null,
       updatedAt: Date.now(),

@@ -17,6 +17,8 @@ describe("kycRoutes — consent endpoints (issue 4.26)", () => {
       { name: "email", type: "string", optional: true },
     ],
     providedFields: { first_name: "Ada" },
+    providedFieldStatus: [],
+    sentFields: [],
     message: null,
     lastSyncedAt: 1,
     updatedAt: 1,
