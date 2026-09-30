@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { api, CheckoutError, describeError, type AnchorAuthView, type KycView } from "../../lib/api";
-import { signTransaction } from "../../lib/wallet";
+import { api, CheckoutError, type AnchorAuthView, type KycView } from "../../lib/api";
+import { useAnchorConnect } from "../../lib/anchor-session";
 import { useSellerWallet } from "./SessionGate";
 
 function humanize(field: { name: string; description?: string }): string {
@@ -22,7 +22,15 @@ export default function KycPanel({
   onAnchorConnected: () => void;
 }) {
   const wallet = useSellerWallet();
-  const [connecting, setConnecting] = useState(false);
+  const {
+    connecting,
+    error: anchorError,
+    connectAnchor,
+    hasWallet,
+  } = useAnchorConnect({
+    wallet,
+    onSuccess: onAnchorConnected,
+  });
   const [values, setValues] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,25 +56,6 @@ export default function KycPanel({
     }
   }
 
-  // The anchor knows you by your own wallet, so your wallet signs in to it —
-  // the same kind of challenge as the dashboard login, issued by the anchor.
-  async function connectAnchor() {
-    if (!wallet) return;
-    setError(null);
-    setConnecting(true);
-    try {
-      const { transaction } = await api.getAnchorChallenge();
-      const signed = await signTransaction(transaction, wallet);
-      await api.completeAnchorAuth(signed);
-      onAnchorConnected();
-    } catch (e) {
-      if (e instanceof CheckoutError) setError(describeError(e));
-      else setError("Signing was cancelled or the wallet is unavailable.");
-    } finally {
-      setConnecting(false);
-    }
-  }
-
   if (anchor?.required && !anchor.connected) {
     return (
       <section className="panel">
@@ -75,10 +64,10 @@ export default function KycPanel({
           Cash-out runs through {anchor.anchor ?? "the anchor"}, which verifies you by your wallet
           address. Sign its challenge to connect. It is never submitted, and it cannot move your funds.
         </p>
-        <button className="btn btn--primary" onClick={connectAnchor} disabled={connecting || !wallet}>
+        <button className="btn btn--primary" onClick={connectAnchor} disabled={connecting || !hasWallet}>
           {connecting ? "Waiting for wallet…" : `Connect to ${anchor.anchor ?? "anchor"}`}
         </button>
-        {error && <div className="err">{error}</div>}
+        {(anchorError || error) && <div className="err">{anchorError || error}</div>}
       </section>
     );
   }
