@@ -19,6 +19,7 @@ import {
   TestAnchorOffRamp,
 } from "@checkout/offramp";
 import type { KycPort, Logger, OffRampPort, OffRampStateRepository, OffRampTelemetryRepository } from "@checkout/core";
+import { KycConsentRepository } from "@checkout/core";
 import { env, type OffRampKind } from "../env";
 import { createDb, bootstrap, type DB } from "../db/client";
 import { parsePiiKey, parsePiiKeyring } from "../crypto/pii";
@@ -35,6 +36,7 @@ import {
   DrizzleOfframpTelemetryRepository,
   DrizzleApiKeyRepository,
   DrizzleAnchorSessionRepository,
+  DrizzleKycConsentRepository,
 } from "../repos/index";
 import { LinkService, AnchorHealth } from "./link-service";
 import {
@@ -64,6 +66,10 @@ export interface Container {
   apiKeys: DrizzleApiKeyRepository;
   db: DB;
   kyc: KycPort;
+  /** Per-anchor KYC consent repository. */
+  kycConsents: KycConsentRepository;
+  /** The anchor's home domain (e.g. "testanchor.stellar.org") for consent tracking. Null when no real anchor. */
+  anchorDomain: string | null;
   /** Sellers' own SEP-10 sessions with the anchor. Null when there is no real
    *  anchor (OFFRAMP=mock|none), so nothing to sign in to. */
   anchorAuth: SellerAnchorAuth | null;
@@ -141,6 +147,7 @@ export async function createContainer(): Promise<Container> {
   const offrampStateRepo = new DrizzleOffRampStateRepository(db);
   const telemetryRepo = new DrizzleOfframpTelemetryRepository(db);
   const apiKeysRepo = new DrizzleApiKeyRepository(db);
+  const kycConsentsRepo = new DrizzleKycConsentRepository(db);
 
   // Optional. Quay is multi-tenant: a seller signs in with their own wallet
   // over SEP-10, that address becomes their identity AND their payout
@@ -174,6 +181,7 @@ export async function createContainer(): Promise<Container> {
   const anchor = createAnchor(db, logger, stellar.networkPassphrase);
   const offramp = new CircuitBreakerOffRamp(createOffRamp(anchor, offrampStateRepo, logger));
   const kyc = createKyc(anchor, db);
+  const anchorDomain = anchor?.auth.anchorDomain ?? null;
 
   // Anchor health probe + circuit breaker (issue #19, 3.7). With mock or no
   // off-ramp the probe is disabled and short-circuits to "always available" so
@@ -261,6 +269,8 @@ export async function createContainer(): Promise<Container> {
     apiKeys: apiKeysRepo,
     db,
     kyc,
+    kycConsents: kycConsentsRepo,
+    anchorDomain,
     anchorAuth: anchor?.auth ?? null,
     telemetry: telemetryRepo,
     config: { network: stellar.network, horizonUrl: stellar.horizonUrl, sellerWallet },
