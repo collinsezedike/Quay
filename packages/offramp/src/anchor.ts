@@ -158,6 +158,9 @@ export class AnchorOffRamp implements OffRampPort {
       sellAsset: input.sourceAsset,
       sellAmount: input.sourceAmount,
       buyCurrency: input.targetCurrency,
+      // A SEP-24 withdrawal can only spend a quote minted for the SEP-24
+      // context; the SEP-6 default would be rejected by the anchor.
+      context: "sep24",
     });
 
     const expiresAt = Date.parse(q.expiresAt);
