@@ -314,7 +314,9 @@ export class AnchorOffRamp implements OffRampPort {
     await this.state.saveJob({
       jobId: interactiveResult.id,
       linkId: input.linkId,
-      anchor: this.homeDomain,
+      // Suffixed so telemetry and the poller can tell a SEP-24 job from a
+      // SEP-6 one at the same anchor (issue 3.16).
+      anchor: `${this.homeDomain}#sep24`,
       sellerId: input.customer.sellerId,
       account: input.customer.account,
       targetCurrency: q.buyCurrency,
