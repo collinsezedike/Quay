@@ -13,6 +13,8 @@ export type { OffRampQuote, PaymentLink, PaymentRequest, PayoutFieldDescriptor }
 export interface LinkWithRequest {
   link: PaymentLink;
   request: PaymentRequest;
+  /** Paying in any asset (issue 8.30). Optional so older API responses still parse. */
+  pay?: { pathPayments: boolean; maxSlippageBps: number };
 }
 
 /** One SEP-6 withdrawal type and the payout fields it needs (issue 5.24). */
