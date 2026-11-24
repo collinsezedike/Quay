@@ -118,3 +118,15 @@ describe("PATH_PAYMENTS_MAX_SLIPPAGE_BPS (issue 8.30)", () => {
     expect(await envError()).toMatch(/^PATH_PAYMENTS_MAX_SLIPPAGE_BPS must be an integer from 0 to 1000/);
   });
 });
+
+describe("PATH_PAYMENTS_MAX_PRICE_IMPACT_BPS (issue #547)", () => {
+  it("defaults to 300", async () => {
+    setEnv({ PATH_PAYMENTS_MAX_PRICE_IMPACT_BPS: "" });
+    expect((await envOk()).pathPaymentsMaxPriceImpactBps).toBe(300);
+  });
+
+  it("reads an override", async () => {
+    setEnv({ PATH_PAYMENTS_MAX_PRICE_IMPACT_BPS: "150" });
+    expect((await envOk()).pathPaymentsMaxPriceImpactBps).toBe(150);
+  });
+});

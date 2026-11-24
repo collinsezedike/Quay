@@ -247,6 +247,8 @@ export type ApiErrorCode =
   | "wallet_rejected" // buyer closed or rejected the wallet prompt
   | "insufficient_balance"
   | "missing_trustline"
+  | "price_moved"
+  | "no_path"
   | "wrong_network"
   | "unreachable" // synthetic — fetch itself threw (DNS / network down)
   | "server_error" // 5xx or unexpected non-JSON response
@@ -267,6 +269,8 @@ export type ApiErrorCode =
 const BY_REASON_409: Record<string, ApiErrorCode> = {
   insufficient_balance: "insufficient_balance",
   missing_trustline: "missing_trustline",
+  price_moved: "price_moved",
+  no_path: "no_path",
   wrong_network: "wrong_network",
 };
 
@@ -371,6 +375,10 @@ export function describeError(err: CheckoutError): string {
       return "Your wallet does not have enough balance to pay this invoice.";
     case "missing_trustline":
       return "Your wallet needs a trustline for this asset before it can pay.";
+    case "price_moved":
+      return "The price changed while you were signing. Get a new price and try again.";
+    case "no_path":
+      return "There is not enough market depth to pay this in the selected asset right now. Pay in the link asset instead.";
     case "wrong_network":
       return "Your wallet is connected to the wrong Stellar network for this invoice.";
     case "wallet_rejected":

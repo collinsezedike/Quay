@@ -1,6 +1,6 @@
 import { Asset, Horizon, Keypair } from "@stellar/stellar-sdk";
 import { describe, expect, it, vi } from "vitest";
-import { quoteStrictReceive, sendMaxFor } from "../src/path-quote";
+import { filterByPriceImpact, priceImpactBps, quoteStrictReceive, sendMaxFor } from "../src/path-quote";
 import { FakeHorizonClient } from "./fake-horizon";
 
 const USDC_ISSUER = Keypair.random().publicKey();
@@ -261,5 +261,53 @@ describe("sendMaxFor", () => {
 
   it("rejects an invalid amount", () => {
     expect(() => sendMaxFor("abc", 100)).toThrow(/Invalid Stellar amount/);
+  });
+});
+
+describe("priceImpactBps (issue #547)", () => {
+  // Full quote: 100 USDC delivered for 1000 XLM (10 XLM per USDC).
+  const full = { sourceAmount: "1000", destAmount: "100" };
+
+  it("is 0 when the full amount costs the same per unit as the 1% slice", () => {
+    expect(priceImpactBps(full, { sourceAmount: "10", destAmount: "1" })).toBe(0);
+  });
+
+  it("measures how much more the full amount costs per unit", () => {
+    // Slice: 1 USDC for 9.5 XLM. Full is 10/9.5 - 1 = 5.263...% worse -> 527 bps (ceil).
+    expect(priceImpactBps(full, { sourceAmount: "9.5", destAmount: "1" })).toBe(527);
+  });
+
+  it("is 0, not negative, when the full amount is cheaper per unit", () => {
+    expect(priceImpactBps(full, { sourceAmount: "11", destAmount: "1" })).toBe(0);
+  });
+
+  it("rounds up at stroop precision, so a borderline book reads as thinner", () => {
+    // Full costs 1 stroop more than an exact 3% impact.
+    const borderline = { sourceAmount: "1030.0000001", destAmount: "100" };
+    expect(priceImpactBps(borderline, { sourceAmount: "10", destAmount: "1" })).toBe(301);
+    expect(priceImpactBps({ sourceAmount: "1030", destAmount: "100" }, { sourceAmount: "10", destAmount: "1" })).toBe(300);
+  });
+
+  it("refuses zero amounts instead of dividing by zero", () => {
+    expect(() => priceImpactBps(full, { sourceAmount: "0", destAmount: "1" })).toThrow(/positive amounts/);
+    expect(() => priceImpactBps({ sourceAmount: "1", destAmount: "0" }, full)).toThrow(/positive amounts/);
+  });
+});
+
+describe("filterByPriceImpact (issue #547)", () => {
+  const xlm = { asset: "XLM", priceImpactBps: 120 };
+  const aqua = { asset: "AQUA", priceImpactBps: 300 };
+  const thin = { asset: "THIN", priceImpactBps: 301 };
+
+  it("keeps options at or under the limit and drops the rest", () => {
+    expect(filterByPriceImpact([xlm, aqua, thin], 300)).toEqual({ options: [xlm, aqua], reason: null });
+  });
+
+  it("says no_path when every option is too thin, so the checkout offers only the link asset", () => {
+    expect(filterByPriceImpact([thin], 300)).toEqual({ options: [], reason: "no_path" });
+  });
+
+  it("says no_path when there were no options at all", () => {
+    expect(filterByPriceImpact([], 300)).toEqual({ options: [], reason: "no_path" });
   });
 });

@@ -379,6 +379,9 @@ export const env = {
   pathPaymentsEnabled: process.env.PATH_PAYMENTS_ENABLED === "true",
   // Slippage allowed on a path payment's sendMax, in basis points (100 = 1%).
   pathPaymentsMaxSlippageBps: pathPaymentsMaxSlippageBps(),
+  // Pay options whose full-amount price is more than this many basis points
+  // worse than a 1% quote are hidden as too thin (issue #547). Default 300.
+  pathPaymentsMaxPriceImpactBps: num("PATH_PAYMENTS_MAX_PRICE_IMPACT_BPS", 300),
 } as const;
 
 // A production process with the e2e backdoors mounted would accept
