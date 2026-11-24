@@ -20,7 +20,11 @@ export default async function PayPage({
   try {
     data = await api.getLink(id);
   } catch (err) {
-    const isUnreachable = err instanceof CheckoutError && err.code === "unreachable";
+    // Only a real 404 means the link doesn't exist (issue 5.42). A sleeping
+    // API answers 502/503 or nothing at all while it boots; telling a buyer
+    // their valid link "was removed" would be false.
+    const isNotFound = err instanceof CheckoutError && (err.code === "not_found" || err.status === 404);
+    const isUnreachable = !isNotFound;
 
     return (
       <PublicErrorPanel

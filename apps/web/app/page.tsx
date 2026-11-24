@@ -2,6 +2,7 @@ import Link from "next/link";
 import Logo from "./components/Logo";
 import Reveal from "./components/Reveal";
 import ThemeToggle from "./components/ThemeToggle";
+import ApiWarmUp from "./components/ApiWarmUp";
 import "./landing.css";
 
 const REPO = "https://github.com/determined-001/Quay";
@@ -88,6 +89,7 @@ const STATUS: { name: string; note: string; state: "live" | "testing" | "planned
 export default function LandingPage() {
   return (
     <div className="lp">
+      <ApiWarmUp />
       <header className="lp-nav">
         <div className="lp-nav__pill">
           <Logo size={26} />

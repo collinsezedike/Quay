@@ -579,3 +579,9 @@ p { text-wrap: pretty; }
   .spinner { animation: none; }
   .tl-dot.dot--pending { animation: none; }
 }
+
+/* "Starting the payment service" line for a cold API (issue 5.42). */
+.waking-notice {
+  margin-top: 12px;
+  font-size: 13px;
+}
