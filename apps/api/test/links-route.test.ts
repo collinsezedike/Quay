@@ -91,6 +91,7 @@ function fakeContainer(): Container {
     anchorAuth: null,
     db: {} as Container["db"],
     telemetry: { upsert: async () => {}, summary: async () => [], all: async () => [] } as unknown as Container["telemetry"],
+    refunds: {} as Container["refunds"],
     horizonStatus: () => ({ degraded: false, usingFallback: false, consecutiveFailures: 0 }),
     metricsToken: "test-metrics-token",
     ready: async () => true,
